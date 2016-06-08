@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Gamedev Canvas Workshop</title>
+    <style>
+    	* { padding: 0; margin: 0; }
+    	canvas { background: #eee; display: block; margin: 0 auto; }
+    </style>
+</head>
+<body>
+
+<canvas id="myCanvas" width="480" height="320"></canvas>
+
+<script>
+var canvas = document.getElementById("myCanvas");
+var ctx = canvas.getContext("2d");
+
+var rightPressed = false;
+var leftPressed = false;
+var upPressed = false;
+var downPressed = false;
+var spacePressed = false;
+
+var collideDelay=100;
+var lastCollide= (new Date()).getTime();
+
+var lastpowerup = 0;
+var powerupdelay = 2000;
+
+var lastPlayerFire = 0;
+var playerFireDelay = 400;
+
+var player = new Player(canvas.width/2, 3*canvas.height/4);
+
+var playerProjectiles = [];
+var enemyProjectiles = [];
+var enemies = [];
+var powerups= [];
+
+var gameState = "game";
+
+enemies.push(new Enemy(10, 50, 4, 0));
+enemies.push(new Enemy(50, 80, 3.5, 0));
+enemies.push(new Enemy(100, 120, 0, 0));
+
+document.addEventListener("keydown", keyDownHandler, false);
+document.addEventListener("keyup", keyUpHandler, false);
+
+function collisionDetection(){
+  for (var i=0; i< enemies.length; i++){
+    for (var j=0; j< playerProjectiles.length; j++) {
+      var rect1 = enemies[i];
+      var rect2 = playerProjectiles[j];
+      if ((rect1.x - rect1.radius) < (rect2.x + rect2.radius) &&
+          (rect1.x + rect1.radius) > (rect2.x - rect2.radius) &&
+          (rect1.y - rect1.radius) < (rect2.y + rect2.radius) &&
+          (rect1.y + rect1.radius) > (rect2.y - rect2.radius))
+      {
+          var e = enemies [i];
+          var p = playerProjectiles[j];
+          p.remove = true;
+          e.hp-= p.damage;
+      }
+    }
+    
+    var rect1 = player;
+    var rect2 = enemies[i];
+  
+    if ((rect1.x - rect1.radius) < (rect2.x + rect2.radius) &&
+        (rect1.x + rect1.radius) > (rect2.x - rect2.radius) &&
+        (rect1.y - rect1.radius) < (rect2.y + rect2.radius) &&
+        (rect1.y + rect1.radius) > (rect2.y - rect2.radius))
+    {
+     if(lastCollide + collideDelay < (new Date()).getTime()) {
+        
+      
+        player.hp -= 10;
+        player.update();
+        lastCollide= (new Date()).getTime();
+      }
+    }  
+  }
+  
+  for (var j=0; j< enemyProjectiles.length; j++) {
+    var rect1 = player;
+    var rect2 = enemyProjectiles[j];
+    if ((rect1.x - rect1.radius) < (rect2.x + rect2.radius) &&
+        (rect1.x + rect1.radius) > (rect2.x - rect2.radius) &&
+        (rect1.y - rect1.radius) < (rect2.y + rect2.radius) &&
+        (rect1.y + rect1.radius) > (rect2.y - rect2.radius))
+    {
+        var proj = enemyProjectiles[j];
+        proj.remove = true;
+        player.hp -= proj.damage;
+    }
+  }
+
+  for (var j=0; j<powerups.length; j++) {
+    var rect1 = player;
+    var rect2 = powerups[j];
+    if ((rect1.x - rect1.radius) < (rect2.x + rect2.radius) &&
+        (rect1.x + rect1.radius) > (rect2.x - rect2.radius) &&
+        (rect1.y - rect1.radius) < (rect2.y + rect2.radius) &&
+        (rect1.y + rect1.radius) > (rect2.y - rect2.radius))
+    {
+        var pow = powerups[j];
+        pow.activate(player);
+    }
+  }
+} 
+
+function keyDownHandler(e) {
+    if (e.keyCode == 39) {
+        rightPressed = true;
+    }
+    
+    if (e.keyCode == 38) {
+        upPressed = true;
+    }
+    
+    if (e.keyCode == 40) {
+        downPressed = true;
+    }
+    
+    if (e.keyCode == 37) {
+        leftPressed = true;
+    }
+    
+    if (e.keyCode == 32) {
+        spacePressed = true;
+    }
+    
+    if (e.keyCode == 49) {
+      player.weaponSelect(0);
+    }
+    
+    if (e.keyCode == 50) {
+      player.weaponSelect(1);
+    }
+    
+    if (e.keyCode == 51) {
+      player.weaponSelect(2);
+    }
+}
+function keyUpHandler(e) {
+    if (e.keyCode == 39) {
+        rightPressed = false;
+    }
+    
+    if (e.keyCode == 38) {
+        upPressed = false;
+    }
+    
+    if (e.keyCode == 40) {
+        downPressed = false;
+    }
+    
+    if (e.keyCode == 37) {
+        leftPressed = false;
+    }
+    
+    if (e.keyCode == 32) {
+        spacePressed = false;
+    }
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    if (gameState === "game") {
+      collisionDetection();
+
+      player.update();
+      player.draw(ctx);
+      
+      for (var i in playerProjectiles) {
+        var p = playerProjectiles[i];
+        
+        if (p.offScreen || p.remove) {
+          playerProjectiles.splice(i, 1);
+          continue;
+        }
+        
+        p.update();
+        p.draw(ctx);
+      }
+      
+      for (var i in enemyProjectiles) {
+        var p = enemyProjectiles[i];
+        
+        if (p.offScreen || p.remove) {
+          enemyProjectiles.splice(i, 1);
+          continue;
+        }
+        
+        p.update();
+        p.draw(ctx);
+      }
+      
+      for (var i in enemies) {
+        var e = enemies[i];
+        
+         if (e.dead) {
+          enemies.splice(i, 1);
+          continue;
+         }
+        e.update();
+        
+        e.draw(ctx);
+      }
+      
+      for (var i in powerups) {
+        var p = powerups[i];
+        
+        if (p.offScreen || p.remove) {
+          powerups.splice(i, 1);
+          continue;
+        }
+        
+        p.update();        
+        p.draw(ctx);
+      }
+      
+      if (lastpowerup + powerupdelay < (new Date()).getTime()) {
+        var p = new BulletSpeedPowerup();
+        powerups.push(p);
+        lastpowerup = (new Date()).getTime();
+      }
+      
+      console.log("pp: " + playerProjectiles.length + " | " + 
+                  "ep: " + enemyProjectiles.length + " | " +
+                  "e: " + enemies.length + " | " +
+                  "p: " + powerups.length);
+      
+      if (spacePressed) {
+        player.fire(playerProjectiles);
+      }
+      
+      if (player.hp <= 0) {
+        gameState = "gameOver";
+      }
+    } else if (gameState === "gameOver") {
+      ctx.font = "48px sans serif";
+      ctx.fillStyle = "white";
+      ctx.textAlign="center"; 
+      ctx.fillText("Game Over", canvas.width/2, canvas.height/2);
+    }
+}
+function enemyshoot(x, y){
+    var p = new Projectile(x, y, 0, 2 );
+    
+    enemyProjectiles.push(p);
+}
+
+function Projectile(x, y, dx, dy) {
+  this.x = x;
+  this.y = y;
+  this.radius = 2;
+  this.dx = dx;
+  this.dy = dy;
+  this.offScreen = false;
+  this.remove = false;
+  
+  this.color = "#0000FF";
+  this.damage = 10;
+}
+
+  
+Projectile.prototype.update = function ()  {
+  this.x += this.dx;
+  this.y += this.dy;
+  
+  if (this.x < -this.radius || this.x > canvas.width + this.radius ||
+      this.y < -this.radius || this.y > canvas.height + this.radius)
+  {
+    this.offScreen = true;
+  }
+}
+
+Projectile.prototype.draw  = function(ctx) {
+  ctx.beginPath();
+  ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+  ctx.fillStyle = this.color;
+  ctx.fill();
+  ctx.closePath();
+}
+
+function Powerup() {
+  this.constructor = function () {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.radius = 4;
+    this.dx = Math.random() * 2 - 1;
+    this.dy = Math.random() * 2 - 1;
+    this.color = "yellow";
+    
+    this.offScreen = false;
+    this.remove = false;
+        
+    this.aliveTime = 4000;
+    this.lastAlive = (new Date()).getTime();
+  }
+  
+  this.constructor();
+}
+
+Powerup.prototype.update = function ()  {
+  this.x += this.dx;
+  this.y += this.dy;
+  
+  if (this.x < this.radius || this.x > canvas.width - this.radius) {
+    this.dx *= -1;
+  }
+  
+  if (this.y < this.radius || this.y > canvas.height - this.radius) {
+    this.dy *= -1;
+  }
+  
+  if (this.lastAlive + this.aliveTime < (new Date()).getTime()) {
+    this.remove = true;
+  }
+}
+
+Powerup.prototype.draw = function (ctx) {
+  ctx.beginPath();
+  ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+  ctx.fillStyle = this.color;
+  ctx.fill();
+  ctx.closePath();
+}
+
+Powerup.prototype.activate = function () {
+  this.remove = true;
+}
+
+function FireRatePowerup() {
+  this.constructor();
+  this.color = "#FF8800";
+}
+  
+FireRatePowerup.prototype = Object.create(Powerup.prototype);
+
+FireRatePowerup.prototype.activate = function (player) {
+  this.remove = true;
+  player.weapon.increaseROF(20);
+}
+
+function BulletSpeedPowerup() {
+  this.constructor();
+  this.color = "#CCFF00";
+}
+  
+BulletSpeedPowerup.prototype = Object.create(Powerup.prototype);
+
+BulletSpeedPowerup.prototype.activate = function (player) {
+  this.remove = true;
+  player.weapon.increaseBulletSpeed(20);
+}
+ 
+function WeaponSingleShot() {
+  this.dx = 0;
+  this.dy = -2;
+  
+  this.lastFire = 0;
+  this.fireDelay = 600;
+}
+
+WeaponSingleShot.prototype.fire = function(projectiles, x, y) {
+  if (this.lastFire + this.fireDelay < (new Date()).getTime()) {
+    var p = new Projectile(x, y, this.dx, this.dy);
+    
+    projectiles.push(p);
+    this.lastFire = (new Date()).getTime();
+  }
+}
+
+WeaponSingleShot.prototype.increaseROF = function (pct) {
+  this.fireDelay /= (1 + pct/100);
+}
+
+WeaponSingleShot.prototype.increaseBulletSpeed = function (pct) {
+  this.dy *= (1 + pct/100);
+}
+
+function WeaponMultiShot() {
+  this.lastFire = 0;
+  this.fireDelay = 1500;
+  this.spread = 20;
+  this.dx = 0;
+  this.dy = -2;
+}
+
+WeaponMultiShot.prototype.fire = function(projectiles, x, y) {
+  if (this.lastFire + this.fireDelay < (new Date()).getTime()) {
+    projectiles.push(new Projectile(x - this.spread, y, this.dx, this.dy));
+    projectiles.push(new Projectile(x, y, this.dx, this.dy));
+    projectiles.push(new Projectile(x + this.spread, y, this.dx, this.dy));
+    
+    this.lastFire = (new Date()).getTime();
+  }
+}
+
+WeaponMultiShot.prototype.increaseROF = function (pct) {
+  this.fireDelay /= (1 + pct/100);
+}
+
+WeaponMultiShot.prototype.increaseBulletSpeed = function (pct) {
+  this.dy *= (1 + pct/100);
+}
+
+function WeaponSpreadShot() {
+  this.lastFire = 0;
+  this.fireDelay = 1500;
+  //this.angle = Math.PI/8;
+  this.dx = 1.5;
+  this.dy = -2;
+}
+
+WeaponSpreadShot.prototype.fire = function(projectiles, x, y) {
+  if (this.lastFire + this.fireDelay < (new Date()).getTime()) {
+    projectiles.push(new Projectile(x, y, -this.dx, this.dy));
+    projectiles.push(new Projectile(x, y, this.dx, this.dy));
+    projectiles.push(new Projectile(x, y, this.dx, this.dy));
+    
+    this.lastFire = (new Date()).getTime();
+  }
+}
+
+WeaponSpreadShot.prototype.increaseROF = function (pct) {
+  this.fireDelay /= (1 + pct/100);
+}
+
+WeaponSpreadShot.prototype.increaseBulletSpeed = function (pct) {
+  this.dy *= (1 + pct/100);
+}
+
+function Player(x, y) {
+  this.radius = 10;
+  this.x = x;
+  this.y = y;
+  this.dx = 2;
+  this.dy = 2;
+  this.hp = 100;
+  
+  this.weapons = [];
+  
+  this.weapons.push(new WeaponSingleShot());
+  this.weapons.push(new WeaponMultiShot());
+  this.weapons.push(new WeaponSpreadShot());
+  
+  this.weapon = this.weapons[0];
+  
+  
+  this.color = "#00FF00";
+  this.dead = false;
+}
+
+Player.prototype.weaponSelect = function (i) {
+  this.weapon = this.weapons[i];
+}
+
+Player.prototype.update = function () {
+    if (rightPressed && this.x < canvas.width - this.radius) {
+        this.x += this.dx;
+    }
+    
+    if (leftPressed && this.x > this.radius) {
+        this.x -= this.dx;
+    }
+
+    if (downPressed && this.y < canvas.height - this.radius) {
+        this.y += this.dy;
+    }
+    
+    if (upPressed && this.y > this.radius) {
+        this.y -= this.dy;
+    }
+    if (this.hp<=0){
+      this.dead = true;
+    }
+}
+
+Player.prototype.draw = function (ctx) {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+    ctx.fillStyle = this.dead ? "#000000" : this.color;
+    ctx.fill();
+    ctx.closePath();
+}
+
+Player.prototype.fire = function (projectiles) {
+  this.weapon.fire(projectiles, this.x, this.y);
+}
+
+
+// Enemy Class
+function Enemy(x, y, dx, dy) {
+  this.radius = 10;
+  this.x = x;
+  this.y = y;
+  this.dx = dx;
+  this.dy = dy;
+  this.direction = "right";
+  this.lastEnemyFire = (new Date()).getTime();
+  this.enemyFireDelay = 1000;
+  
+  this.color = "#FF0000";
+  this.hp= 100;
+  this.dead=false;
+}
+
+Enemy.prototype.update = function () {
+  if (this.hp<= 0 ){
+    this.dead=true;
+  }
+  if (this.direction === "right") {
+    if (this.x < canvas.width - this.radius) {
+      this.x += this.dx;
+    } else {
+      this.direction = "left";
+    }
+  }
+  
+  if (this.direction === "left") {
+    if (this.x > this.radius) {
+      this.x -= this.dx;
+    } else {
+      this.direction = "right";
+    }
+  }
+  
+  if (this.lastEnemyFire + this.enemyFireDelay < (new Date()).getTime()) {
+    enemyshoot(this.x, this.y);
+    this.lastEnemyFire = (new Date()).getTime();
+  }
+}
+
+Enemy.prototype.draw = function (ctx) {
+  ctx.save();
+  ctx.beginPath();
+  
+  ctx.globalAlpha = this.hp / 200 + 0.5;
+  ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+  ctx.fillStyle = this.color;
+  ctx.fill();
+  
+  ctx.closePath();
+  ctx.restore();
+}
+
+setInterval(draw, 10);
+</script>
+
+</body>
+</html>
