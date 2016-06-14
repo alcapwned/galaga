@@ -218,9 +218,9 @@ WeaponMultiShot.prototype.fire = function (projectiles, x, y) {
 function WeaponSpreadShot() {
 	Weapon.call(this);
 	
-	this.dx = 1.5;
+	//this.dx = 0.8;
 	this.dy = -2;
-	//this.angle = Math.PI/8;
+	this.angle = Math.PI/10;
 	
 	this.lastFire = 0;
 	this.fireDelay = 1500;
@@ -231,9 +231,9 @@ WeaponSpreadShot.prototype.constructor = WeaponSpreadShot;
 
 WeaponSpreadShot.prototype.fire = function (projectiles, x, y) {
 	if (this.lastFire + this.fireDelay < (new Date()).getTime()) {
-		projectiles.push(new Projectile(x, y, -this.dx, this.dy));
-		projectiles.push(new Projectile(x, y, this.dx, this.dy));
-		projectiles.push(new Projectile(x, y, this.dx, this.dy));
+		projectiles.push(new Projectile(x, y, -this.dy * Math.tan(this.angle), this.dy));
+		projectiles.push(new Projectile(x, y, 0, this.dy));
+		projectiles.push(new Projectile(x, y, this.dy * Math.tan(this.angle), this.dy));
 
 		this.lastFire = (new Date()).getTime();
 	}
@@ -340,7 +340,7 @@ Enemy.prototype.update = function () {
 	}
 
 	if (this.lastEnemyFire + this.enemyFireDelay < (new Date()).getTime()) {
-		enemyshoot(this.x, this.y);
+		this.tryFire(this.x, this.y);
 		this.lastEnemyFire = (new Date()).getTime();
 	}
 }
@@ -356,6 +356,17 @@ Enemy.prototype.draw = function (ctx) {
 
 	ctx.closePath();
 	ctx.restore();
+}
+
+Enemy.prototype.tryFire = function (x, y) {
+	if (this.lastEnemyFire + this.enemyFireDelay < (new Date()).getTime()) {
+		this.fire(x, y);
+		this.lastEnemyFire = (new Date()).getTime();
+	}
+}
+
+Enemy.prototype.fire = function (x, y) {
+	enemyProjectiles.push(new Projectile(x, y, 0, 2));
 }
 
 // #########################
@@ -389,8 +400,8 @@ var powerups = [];
 
 var gameState = "game";
 
-enemies.push(new Enemy(10, 50, 4, 0));
-enemies.push(new Enemy(50, 80, 3.5, 0));
+enemies.push(new Enemy(10, 50, 2, 0));
+enemies.push(new Enemy(50, 80, 1.5, 0));
 enemies.push(new Enemy(100, 120, 0, 0));
 
 document.addEventListener("keydown", keyDownHandler, false);
@@ -459,19 +470,19 @@ function collisionDetection() {
 }
 
 function keyDownHandler(e) {
-	if (e.keyCode == 39) {
+	if (e.keyCode == 68) {
 		rightPressed = true;
 	}
 
-	if (e.keyCode == 38) {
+	if (e.keyCode == 87) {
 		upPressed = true;
 	}
 
-	if (e.keyCode == 40) {
+	if (e.keyCode == 83) {
 		downPressed = true;
 	}
 
-	if (e.keyCode == 37) {
+	if (e.keyCode == 65) {
 		leftPressed = true;
 	}
 
@@ -492,19 +503,19 @@ function keyDownHandler(e) {
 	}
 }
 function keyUpHandler(e) {
-	if (e.keyCode == 39) {
+	if (e.keyCode == 68) {
 		rightPressed = false;
 	}
 
-	if (e.keyCode == 38) {
+	if (e.keyCode == 87) {
 		upPressed = false;
 	}
 
-	if (e.keyCode == 40) {
+	if (e.keyCode == 83) {
 		downPressed = false;
 	}
 
-	if (e.keyCode == 37) {
+	if (e.keyCode == 65) {
 		leftPressed = false;
 	}
 
@@ -597,11 +608,6 @@ function draw() {
 		ctx.textAlign = "center";
 		ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
 	}
-}
-function enemyshoot(x, y) {
-	var p = new Projectile(x, y, 0, 2);
-
-	enemyProjectiles.push(p);
 }
 
 setInterval(draw, 10);
