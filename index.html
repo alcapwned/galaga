@@ -22,6 +22,8 @@ var upPressed = false;
 var downPressed = false;
 var spacePressed = false;
 
+var randompowerup = 0;
+
 var collideDelay=100;
 var lastCollide= (new Date()).getTime();
 
@@ -106,6 +108,12 @@ function collisionDetection(){
     {
         var pow = powerups[j];
         pow.activate(player);
+        if(randompowerup==1){
+            console.log("bullet speed powerup aquired");
+        }else if(randompowerup==2){
+            console.log("fire rate power up aquired");
+        }     
+        }
     }
   }
 } 
@@ -226,10 +234,19 @@ function draw() {
       }
       
       if (lastpowerup + powerupdelay < (new Date()).getTime()) {
-        var p = new BulletSpeedPowerup();
+        do {
+            randompowerup = Math.floor((Math.random() * 2) + 1);
+            if (randompowerup==1){
+                var p = new BulletSpeedPowerup();
+            }
+            if(randompowerup==2){
+                var p = new FireRatePowerup();
+            }
         powerups.push(p);
         lastpowerup = (new Date()).getTime();
       }
+      //make sure the random works
+      while(randompowerup==0);
       
       console.log("pp: " + playerProjectiles.length + " | " + 
                   "ep: " + enemyProjectiles.length + " | " +
