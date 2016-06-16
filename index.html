@@ -113,7 +113,6 @@ function collisionDetection(){
         }else if(randompowerup==2){
             console.log("fire rate power up aquired");
         }     
-        }
     }
   }
 } 
@@ -242,11 +241,14 @@ function draw() {
             if(randompowerup==2){
                 var p = new FireRatePowerup();
             }
+        }
+        //make sure the random works
+        while(randompowerup==0);
         powerups.push(p);
         lastpowerup = (new Date()).getTime();
-      }
-      //make sure the random works
-      while(randompowerup==0);
+
+      
+      
       
       console.log("pp: " + playerProjectiles.length + " | " + 
                   "ep: " + enemyProjectiles.length + " | " +
