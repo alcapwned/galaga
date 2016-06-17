@@ -434,10 +434,9 @@ function collisionDetection() {
 		if ((rect1.x - rect1.radius) < (rect2.x + rect2.radius) &&
 			(rect1.x + rect1.radius) > (rect2.x - rect2.radius) &&
 			(rect1.y - rect1.radius) < (rect2.y + rect2.radius) &&
-			(rect1.y + rect1.radius) > (rect2.y - rect2.radius)) {
-			if (lastCollide + collideDelay < (new Date()).getTime()) 
-		{
-
+			(rect1.y + rect1.radius) > (rect2.y - rect2.radius)) 
+    {
+			if (lastCollide + collideDelay < (new Date()).getTime()) {
 				player.hp -= 10;
 				player.update();
 				lastCollide = (new Date()).getTime();
