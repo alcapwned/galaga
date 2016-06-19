@@ -158,6 +158,25 @@ HPPowerup.prototype.activate = function (player) {
 }
 
 // ########################
+// PlayerSpeedPowerup Class
+// ########################
+
+function PlayerSpeedPowerup() {
+	Powerup.call(this);
+	
+	this.color = "#00FF00";
+}
+
+PlayerSpeedPowerup.prototype = Object.create(Powerup.prototype);
+PlayerSpeedPowerup.prototype.constructor = PlayerSpeedPowerup;
+
+PlayerSpeedPowerup.prototype.activate = function (player) {
+	this.remove = true;
+	
+  player.increaseSpeed(10);
+}
+
+// ########################
 // Weapon Class
 // ########################
 
@@ -270,8 +289,15 @@ function Player(x, y) {
 	this.radius = 10;
 	this.x = x;
 	this.y = y;
-	this.dx = 2;
-	this.dy = 2;
+	this.curdx = 0;
+	this.curdy = 0;
+  this.ax = 0.05;
+  this.ay = 0.05;
+  this.dx = 1.5;
+  this.dy = 1.5;
+  this.maxdx = 4;
+  this.maxdy = 4;
+  
   this.maxhp = 100;
 	this.hp = this.maxhp;
 
@@ -324,13 +350,28 @@ Player.prototype.fire = function (projectiles) {
 	this.weapon.fire(projectiles, this.x, this.y);
 }
 
+Player.prototype.increaseSpeed = function (pct) {
+  this.dx *= (1 + pct/100);
+  
+  if (this.dx > this.maxdx)
+    this.dx = this.maxdx;
+    
+  this.dy *= (1 + pct/100);
+  
+  if (this.dy > this.maxdy)
+    this.dy = this.maxdy;
+  
+}
+
 // ########################
 // EnemyAI Class
 // ########################
 
 function EnemyAI(enemy) {
-  this.dx = 1;
+  this.dx = 2 + 0.5 * (2 * Math.random() - 1);
   this.dy = 0;
+  this.bulletSpeedAvg = 2;
+  this.bulletSpeedSpread = 0.5;
   
   this.enemy = enemy;
   
@@ -354,34 +395,50 @@ EnemyAI.prototype.move = function () {
 		}
 	}
    
-	if (this.enemy.lastEnemyFire + this.enemy.enemyFireDelay < (new Date()).getTime()) {
-		this.enemy.tryFire(this.enemy.x, this.enemy.y);
-		this.enemy.lastEnemyFire = (new Date()).getTime();
-	}
+	this.enemy.tryFire(
+    this.enemy.x,
+    this.enemy.y,
+    0,
+    this.bulletSpeedAvg + this.bulletSpeedSpread * (2 * Math.random() - 1)
+  );
 }
-function EnemyAI1(enemy) {
-    this.theta= 0;
-    this.radius = 50;
-    this.dtheta = Math.PI/1000;
-    this.enemy= enemy;
-    this.direction= "circular";
-    this.dx= 0;
-    this.dy =0;
- }
- EnemyAI1.prototype.move = function () {
-  this.theta+=this.dtheta;
-   this.dx=-this.radius*Math.sin(this.theta)*this.dtheta;
-   this.dy= this.radius*Math.cos(this.theta)*this.dtheta;
-   this.enemy.x+= this.dx;
-   this.enemy.y+= this.dy;
-   
-	if (this.enemy.lastEnemyFire + this.enemy.enemyFireDelay < (new Date()).getTime()) {
-		this.enemy.tryFire(this.enemy.x, this.enemy.y);
-		this.enemy.lastEnemyFire = (new Date()).getTime();
-	}
- }
- 
 
+// ########################
+// EnemyAICircle Class
+// ########################
+
+function EnemyAICircle(enemy, cx, cy) {
+  this.cx = cx;
+  this.cy = cy;  
+	this.dcx = 0.5;
+	this.dcy = 0;
+  
+	this.theta = 0;
+	this.radius = 50;
+	this.dtheta = Math.PI / 100;
+	this.enemy = enemy;
+	this.direction = "circular";
+}
+
+EnemyAICircle.prototype.move = function () {
+	this.theta += this.dtheta;  
+//	this.dx = -this.radius * Math.sin(this.theta) * this.dtheta;
+//  this.dy = this.radius * Math.cos(this.theta) * this.dtheta;
+
+  this.cx += this.dcx;
+  this.cy += this.dcy;
+  
+	this.enemy.x = this.cx + this.radius * Math.cos(this.theta);
+	this.enemy.y = this.cy + this.radius * Math.sin(this.theta);
+  
+  if (this.enemy.x > canvas.width - this.enemy.radius || this.enemy.x < this.enemy.radius) {
+    this.dcx *= -1;
+    this.dcy *= -1;
+    this.dtheta *= -1;
+  }
+
+	this.enemy.tryFire(this.enemy.x, this.enemy.y, 0, 2);
+}
 
 // ########################
 // Enemy Class
@@ -396,6 +453,7 @@ function Enemy(x, y, dx, dy) {
 	this.direction = "right";
 	this.lastEnemyFire = (new Date()).getTime();
 	this.enemyFireDelay = 1000;
+  this.score = 100;
   
   this.ai = new EnemyAI(this);
 
@@ -425,24 +483,30 @@ Enemy.prototype.draw = function (ctx) {
 	ctx.restore();
 }
 
-Enemy.prototype.tryFire = function (x, y) {
+Enemy.prototype.tryFire = function (x, y, dx, dy) {
 	if (this.lastEnemyFire + this.enemyFireDelay < (new Date()).getTime()) {
-		this.fire(x, y);
+		this.fire(x, y, dx, dy);
 		this.lastEnemyFire = (new Date()).getTime();
 	}
 }
 
-Enemy.prototype.fire = function (x, y) {
-	enemyProjectiles.push(new Projectile(x, y, 0, 2));
+Enemy.prototype.fire = function (x, y, dx, dy) {
+	enemyProjectiles.push(new Projectile(x, y, dx, dy));
 }
-function Enemytype1(x, y, dx, dy){
+
+// ########################
+// EnemyCircle Class
+// ########################
+
+function EnemyCircle(x, y, dx, dy){
   Enemy.call(this, x, y, dx, dy)
-  this.ai = new EnemyAI1(this);
-
+  this.ai = new EnemyAICircle(this, x, y);
+  
+  this.score = 200;
 }
 
-Enemytype1.prototype = Object.create(Enemy.prototype);
-Enemytype1.prototype.constructor = Enemytype1;
+EnemyCircle.prototype = Object.create(Enemy.prototype);
+EnemyCircle.prototype.constructor = EnemyCircle;
 
 
 // #########################
@@ -475,11 +539,12 @@ var enemies = [];
 var powerups = [];
 
 var gameState = "game";
+var score = 0;
 
 enemies.push(new Enemy(10, 50, 2, 0));
 enemies.push(new Enemy(50, 80, 1.5, 0));
 enemies.push(new Enemy(100, 120, 0, 0));
-enemies.push(new Enemytype1(200, 120, 0, 0));
+enemies.push(new EnemyCircle(200, 60, 0, 0));
 
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
@@ -548,7 +613,9 @@ function collisionDetection() {
 				console.log("fire rate powerup aquired");
 			} else if (pow instanceof HPPowerup) {
 				console.log("HP powerup aquired");
-			}
+			} else if (pow instanceof PlayerSpeedPowerup) {
+				console.log("Player speed powerup aquired");      
+      }
 		}
 	}
 }
@@ -649,10 +716,11 @@ function draw() {
 
 			if (e.dead) {
 				enemies.splice(i, 1);
+        score += e.score;
 				continue;
 			}
+      
 			e.update();
-
 			e.draw(ctx);
 		}
 
@@ -669,7 +737,7 @@ function draw() {
 		}
 
 		if (lastpowerup + powerupdelay < (new Date()).getTime()) {
-      var randompowerup = Math.floor((Math.random() * 3) + 1);
+      var randompowerup = Math.floor((Math.random() * 4) + 1);
       
       if (randompowerup == 1) {
         var p = new BulletSpeedPowerup();
@@ -677,6 +745,8 @@ function draw() {
         var p = new FireRatePowerup();
       } else if (randompowerup == 3) {
         var p = new HPPowerup();
+      } else if (randompowerup == 4) {
+        var p = new PlayerSpeedPowerup();
       }
       
 			powerups.push(p);
@@ -696,6 +766,7 @@ function draw() {
 		ctx.fillStyle = "white";
 		ctx.textAlign = "left";
 		ctx.fillText("HP = " + player.hp + "/" + player.maxhp, 0, 16);
+		ctx.fillText("Score = " + score, 0, 32);
 
 		if (player.hp <= 0) {
 			gameState = "gameOver";
