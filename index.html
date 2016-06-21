@@ -287,16 +287,16 @@ function Player(x, y) {
 	this.radius = 10;
 	this.x = x;
 	this.y = y;
-	this.curdx = 0;
-	this.curdy = 0;
-  this.ax = 0.05;
-  this.ay = 0.05;
-  this.dx = 1.5;
-  this.dy = 1.5;
-  this.maxdx = 4;
-  this.maxdy = 4;
+	this.dx = 0;
+	this.dy = 0;
+	this.ax = 0.08;
+	this.ay = 0.08;
+	this.maxdx = 1.8;
+	this.maxdy = 1.8;
+	this.limitdx = 4;
+	this.limitdy = 4;
   
-  this.maxhp = 100;
+	this.maxhp = 100;
 	this.hp = this.maxhp;
 
 	this.weapons = [];
@@ -316,21 +316,56 @@ Player.prototype.weaponSelect = function (i) {
 }
 
 Player.prototype.update = function () {
-	if (rightPressed && this.x < canvas.width - this.radius) {
-		this.x += this.dx;
+	if (rightPressed) {
+		this.dx += this.ax;
+		if (this.dx > this.maxdx) this.dx = this.maxdx;
+	} else if (leftPressed) {
+		this.dx -= this.ax;
+		if (this.dx < -this.maxdx) this.dx = -this.maxdx;
+	} else {
+		if (Math.abs(this.dx) < this.ax) {
+			this.dx = 0;
+		} else {
+			this.dx -= Math.sign(this.dx) * this.ax;
+		}
+	}
+	
+	if (this.x > canvas.width - this.radius) {
+		this.dx = 0;
+		this.x = canvas.width - this.radius;
+	} else if (this.x < this.radius) {
+		this.dx = 0;
+		this.x = this.radius;
+	}
+	
+	this.x += this.dx;
+	
+	
+	if (downPressed) {
+		this.dy += this.ay;
+		if (this.dy > this.maxdy) this.dy = this.maxdy;
+	} else if (upPressed) {
+		this.dy -= this.ay;
+		if (this.dy < -this.maxdy) this.dy = -this.maxdy;
+	} else {
+		if (Math.abs(this.dy) < this.ay) {
+			this.dy = 0;
+		} else {
+			this.dy -= Math.sign(this.dy) * this.ay;
+		}
 	}
 
-	if (leftPressed && this.x > this.radius) {
-		this.x -= this.dx;
+	if (this.y > canvas.height - this.radius) {
+		this.dy = 0;
+		this.y = canvas.height - this.radius;
+	} else if (this.y < this.radius) {
+		this.dy = 0;
+		this.y = this.radius;
 	}
-
-	if (downPressed && this.y < canvas.height - this.radius) {
-		this.y += this.dy;
-	}
-
-	if (upPressed && this.y > this.radius) {
-		this.y -= this.dy;
-	}
+	
+	this.y += this.dy;
+	
+	
 	if (this.hp <= 0) {
 		this.dead = true;
 	}
@@ -349,16 +384,11 @@ Player.prototype.fire = function (projectiles) {
 }
 
 Player.prototype.increaseSpeed = function (pct) {
-  this.dx *= (1 + pct/100);
-  
-  if (this.dx > this.maxdx)
-    this.dx = this.maxdx;
+  this.maxdx *= (1 + pct/100);  
+  if (this.maxdx > this.limitdx) this.maxdx = this.limitdx;
     
-  this.dy *= (1 + pct/100);
-  
-  if (this.dy > this.maxdy)
-    this.dy = this.maxdy;
-  
+  this.maxdy *= (1 + pct/100);  
+  if (this.maxdy > this.limitdy) this.maxdy = this.limitdy;  
 }
 
 // ########################
