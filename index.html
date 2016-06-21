@@ -396,14 +396,14 @@ Player.prototype.increaseSpeed = function (pct) {
 // ########################
 
 function EnemyAI(enemy) {
-  this.dx = 2 + 0.5 * (2 * Math.random() - 1);
-  this.dy = 0;
-  this.bulletSpeedAvg = 2;
-  this.bulletSpeedSpread = 0.5;
-  
-  this.enemy = enemy;
-  
-  this.direction = "right";
+	this.dx = 2 + 0.5 * (2 * Math.random() - 1);
+	this.dy = 0;
+	this.bulletSpeedAvg = 2;
+	this.bulletSpeedSpread = 0.5;
+
+	this.enemy = enemy;
+
+	this.direction = "right";
 }
 
 EnemyAI.prototype.move = function () {
@@ -424,11 +424,11 @@ EnemyAI.prototype.move = function () {
 	}
    
 	this.enemy.tryFire(
-    this.enemy.x,
-    this.enemy.y,
-    0,
-    this.bulletSpeedAvg + this.bulletSpeedSpread * (2 * Math.random() - 1)
-  );
+		this.enemy.x,
+		this.enemy.y,
+		0,
+		this.bulletSpeedAvg + this.bulletSpeedSpread * (2 * Math.random() - 1)
+	);
 }
 
 // ########################
@@ -436,11 +436,11 @@ EnemyAI.prototype.move = function () {
 // ########################
 
 function EnemyAICircle(enemy, cx, cy) {
-  this.cx = cx;
-  this.cy = cy;  
+	this.cx = cx;
+	this.cy = cy;  
 	this.dcx = 0.5;
 	this.dcy = 0;
-  
+
 	this.theta = 0;
 	this.radius = 50;
 	this.dtheta = Math.PI / 100;
@@ -449,21 +449,23 @@ function EnemyAICircle(enemy, cx, cy) {
 }
 
 EnemyAICircle.prototype.move = function () {
-	this.theta += this.dtheta;  
-//	this.dx = -this.radius * Math.sin(this.theta) * this.dtheta;
-//  this.dy = this.radius * Math.cos(this.theta) * this.dtheta;
+	this.theta += this.dtheta;
 
-  this.cx += this.dcx;
-  this.cy += this.dcy;
+	this.cx += this.dcx;
+	this.cy += this.dcy;
   
 	this.enemy.x = this.cx + this.radius * Math.cos(this.theta);
 	this.enemy.y = this.cy + this.radius * Math.sin(this.theta);
   
-  if (this.enemy.x > canvas.width - this.enemy.radius || this.enemy.x < this.enemy.radius) {
-    this.dcx *= -1;
-    this.dcy *= -1;
-    this.dtheta *= -1;
-  }
+	if (this.enemy.x > canvas.width - this.enemy.radius || this.enemy.x < this.enemy.radius) {
+		this.dcx *= -1;
+		this.dtheta *= -1;
+	}
+	
+	if (this.enemy.y > canvas.height - this.enemy.radius || this.enemy.y < this.enemy.radius) {
+		this.dcy *= -1;
+		this.dtheta *= -1;
+	}
 
 	this.enemy.tryFire(this.enemy.x, this.enemy.y, 0, 2);
 }
@@ -481,9 +483,9 @@ function Enemy(x, y, dx, dy) {
 	this.direction = "right";
 	this.lastEnemyFire = (new Date()).getTime();
 	this.enemyFireDelay = 1000;
-  this.score = 100;
-  
-  this.ai = new EnemyAI(this);
+	this.score = 100;
+
+	this.ai = new EnemyAI(this);
 
 	this.color = "#FF0000";
 	this.hp = 100;
@@ -572,7 +574,7 @@ var score = 0;
 enemies.push(new Enemy(10, 50, 2, 0));
 enemies.push(new Enemy(50, 80, 1.5, 0));
 enemies.push(new Enemy(100, 120, 0, 0));
-enemies.push(new EnemyCircle(200, 60, 0, 0));
+enemies.push(new EnemyCircle(200, 40, 0, 0));
 
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
