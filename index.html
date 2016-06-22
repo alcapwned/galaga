@@ -12,6 +12,8 @@
 
 <canvas id="myCanvas" width="480" height="320"></canvas>
 
+<script src="./victor.js"></script>
+
 <script>
 
 // ########################
@@ -287,13 +289,13 @@ function Player(x, y) {
 	this.radius = 10;
 	this.x = x;
 	this.y = y;
-	this.dx = 0;
+	this.dx = 0;		// Current speed
 	this.dy = 0;
-	this.ax = 0.08;
+	this.ax = 0.08;		// Acceleration
 	this.ay = 0.08;
-	this.maxdx = 1.8;
+	this.maxdx = 1.8;	// Current max speed
 	this.maxdy = 1.8;
-	this.limitdx = 4;
+	this.limitdx = 4;	// Highest max speed you can get via powerups
 	this.limitdy = 4;
   
 	this.maxhp = 100;
@@ -445,7 +447,6 @@ function EnemyAICircle(enemy, cx, cy) {
 	this.radius = 50;
 	this.dtheta = Math.PI / 100;
 	this.enemy = enemy;
-	this.direction = "circular";
 }
 
 EnemyAICircle.prototype.move = function () {
@@ -470,6 +471,72 @@ EnemyAICircle.prototype.move = function () {
 	this.enemy.tryFire(this.enemy.x, this.enemy.y, 0, 2);
 }
 
+// ########################
+// EnemyAIPath Class
+// ########################
+
+function EnemyAIPath(enemy, speed, path) {
+	this.enemy = enemy;
+	this.speed = speed;
+	this.path = path || [];
+	this.p0i = 0;
+	this.p1i = 1;
+	this.t = 0;
+}
+
+EnemyAIPath.prototype.addPoint = function (p) {
+	this.path.push(p);
+	return this;
+}
+
+EnemyAIPath.prototype.move = function () {
+	if (this.path.length == 0) {
+		this.enemy.x = 0;
+		this.enemy.y = 0;
+		return;
+	} else if (this.path.length == 1) {
+		this.enemy.x = path[0].x;
+		this.enemy.y = path[0].y;
+		return;
+	}
+	
+	var p0 = this.path[this.p0i];
+	var p1 = this.path[this.p1i];
+	var d = p1.clone().subtract(p0).length();
+	var dt = this.speed / d;
+	
+	this.t += dt;
+	
+	if (this.t >= 1) {
+		while (this.t >= 1) this.t--;
+		
+		if (this.p1i == this.path.length - 1) {
+			this.p0i = this.path.length - 1;
+			this.p1i = this.path.length - 2;
+		} else if (this.p1i == 0) {
+			this.p0i = 0;
+			this.p1i = 1;
+		} else {
+			if (this.p0i < this.p1i) {
+				this.p0i++;
+				this.p1i++;
+			} else {
+				this.p0i--;
+				this.p1i--;
+			}
+		}
+		
+		p0 = this.path[this.p0i];
+		p1 = this.path[this.p1i];
+	}
+	
+	var p = p0.clone().mix(p1, this.t)
+	this.enemy.x = p.x;
+	this.enemy.y = p.y;
+	
+	this.enemy.tryFire(this.enemy.x, this.enemy.y, 0, 2);
+}
+	
 // ########################
 // Enemy Class
 // ########################
@@ -533,10 +600,30 @@ function EnemyCircle(x, y, dx, dy){
   this.ai = new EnemyAICircle(this, x, y);
   
   this.score = 200;
+  this.color = "#FF9900";
 }
 
 EnemyCircle.prototype = Object.create(Enemy.prototype);
 EnemyCircle.prototype.constructor = EnemyCircle;
+
+// ########################
+// EnemyPath Class
+// ########################
+
+function EnemyPath(x, y, dx, dy){
+  Enemy.call(this, x, y, dx, dy)
+  this.ai = new EnemyAIPath(this, 1)
+	.addPoint(new Victor(50, 50))
+	.addPoint(new Victor(200, 50))
+	.addPoint(new Victor(200, 200))
+	.addPoint(new Victor(400, 50));
+  
+  this.score = 200;
+  this.color = "#6600FF";
+}
+
+EnemyPath.prototype = Object.create(Enemy.prototype);
+EnemyPath.prototype.constructor = EnemyPath;
 
 
 // #########################
@@ -575,6 +662,7 @@ enemies.push(new Enemy(10, 50, 2, 0));
 enemies.push(new Enemy(50, 80, 1.5, 0));
 enemies.push(new Enemy(100, 120, 0, 0));
 enemies.push(new EnemyCircle(200, 40, 0, 0));
+enemies.push(new EnemyPath(200, 40, 0, 0));
 
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
