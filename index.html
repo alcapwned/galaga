@@ -177,6 +177,25 @@ PlayerSpeedPowerup.prototype.activate = function (player) {
 }
 
 // ########################
+// PlayerAccelPowerup Class
+// ########################
+
+function PlayerAccelPowerup() {
+	Powerup.call(this);
+	
+	this.color = "#00FFFF";
+}
+
+PlayerAccelPowerup.prototype = Object.create(Powerup.prototype);
+PlayerAccelPowerup.prototype.constructor = PlayerAccelPowerup;
+
+PlayerAccelPowerup.prototype.activate = function (player) {
+	this.remove = true;
+	
+  player.increaseAccel(10);
+}
+
+// ########################
 // Weapon Class
 // ########################
 
@@ -293,6 +312,8 @@ function Player(x, y) {
 	this.dy = 0;
 	this.ax = 0.08;		// Acceleration
 	this.ay = 0.08;
+	this.maxax = 0.15;	// Max acceleration possible with powerups
+	this.maxay = 0.15;
 	this.maxdx = 1.8;	// Current max speed
 	this.maxdy = 1.8;
 	this.limitdx = 4;	// Highest max speed you can get via powerups
@@ -391,6 +412,14 @@ Player.prototype.increaseSpeed = function (pct) {
     
   this.maxdy *= (1 + pct/100);  
   if (this.maxdy > this.limitdy) this.maxdy = this.limitdy;  
+}
+
+Player.prototype.increaseAccel = function (pct) {
+  this.ax *= (1 + pct/100);  
+  if (this.ax > this.maxax) this.ax = this.maxax;
+    
+  this.ay *= (1 + pct/100);  
+  if (this.ay > this.maxay) this.ay = this.maxay;  
 }
 
 // ########################
@@ -726,14 +755,16 @@ function collisionDetection() {
 			pow.activate(player);
 
 			if (pow instanceof BulletSpeedPowerup) {
-				console.log("bullet speed powerup aquired");
+				console.log("Bullet speed powerup aquired");
 			} else if (pow instanceof FireRatePowerup) {
-				console.log("fire rate powerup aquired");
+				console.log("Fire rate powerup aquired");
 			} else if (pow instanceof HPPowerup) {
 				console.log("HP powerup aquired");
 			} else if (pow instanceof PlayerSpeedPowerup) {
 				console.log("Player speed powerup aquired");      
-      }
+			} else if (pow instanceof PlayerAccelPowerup) {
+				console.log("Player acceleration powerup aquired");      
+			}
 		}
 	}
 }
@@ -855,17 +886,20 @@ function draw() {
 		}
 
 		if (lastpowerup + powerupdelay < (new Date()).getTime()) {
-      var randompowerup = Math.floor((Math.random() * 4) + 1);
+			var randompowerup = Math.floor((Math.random() * 5) + 1);
+			var p;
       
-      if (randompowerup == 1) {
-        var p = new BulletSpeedPowerup();
-      } else if (randompowerup == 2) {
-        var p = new FireRatePowerup();
-      } else if (randompowerup == 3) {
-        var p = new HPPowerup();
-      } else if (randompowerup == 4) {
-        var p = new PlayerSpeedPowerup();
-      }
+			if (randompowerup == 1) {
+				p = new BulletSpeedPowerup();
+			} else if (randompowerup == 2) {
+				p = new FireRatePowerup();
+			} else if (randompowerup == 3) {
+				p = new HPPowerup();
+			} else if (randompowerup == 4) {
+				p = new PlayerSpeedPowerup();
+			} else if (randompowerup == 5) {
+				p = new PlayerAccelPowerup();
+			}
       
 			powerups.push(p);
 			lastpowerup = (new Date()).getTime();
