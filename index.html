@@ -38,7 +38,8 @@ Projectile.prototype.update = function () {
 	this.y += this.dy;
 
 	if (this.x < -this.radius || this.x > canvas.width + this.radius ||
-		this.y < -this.radius || this.y > canvas.height + this.radius) {
+		this.y < -this.radius || this.y > canvas.height + this.radius)
+	{
 		this.offScreen = true;
 	}
 }
@@ -69,13 +70,13 @@ Bullet.prototype.constructor = Bullet;
 // HomingBullet Class
 // ########################
 
-function HomingBullet(x, y, dx, dy, target) {
-	Bullet.call(this, x, y, dx, dy);
+function HomingBullet(x, y, speed, target) {
+	Bullet.call(this, x, y, 0, speed);
 	this.target = target;
 
-	this.speed = dy;
+	this.speed = speed;
 	this.dtheta = Math.PI / 400;
-	this.v = new Victor(0, dy);
+	this.v = new Victor(0, this.speed);
 
 	this.color = "#0066FF";
 	this.damage = 2;
@@ -116,10 +117,17 @@ HomingBullet.prototype.update = function () {
 // PlayerHomingBullet Class
 // ########################
 
-function PlayerHomingBullet(x, y, dx, dy, targetList) {
-	HomingBullet.call(this, x, y, dx, dy);
+function PlayerHomingBullet(x, y, speed, targetList) {
+	HomingBullet.call(this, x, y, speed, targetList[0]);
+	this.dx = 0;
+	this.dy = -speed;
+	
 	this.targetList = targetList;
 	this.target = this.findClosestTarget();
+
+	this.speed = speed;
+	this.dtheta = Math.PI / 400;
+	this.v = new Victor(0, -this.speed);
 
 	this.color = "#FF66FF";
 	this.damage = 10;
@@ -130,13 +138,35 @@ PlayerHomingBullet.prototype.constructor = PlayerHomingBullet;
 
 PlayerHomingBullet.prototype.update = function () {
 	this.target = this.findClosestTarget();
-	HomingBullet.prototype.update.call(this);
+	
+	if (this.target) {
+		HomingBullet.prototype.update.call(this);
+	} else {
+		StraightBullet.prototype.update.call(this);
+	}	
 }
 
 PlayerHomingBullet.prototype.findClosestTarget = function () {
-	var b = new Victor(this.x, this.y);
-	var t = this.targetList[0];
-	return t;
+	if (this.targetList.length == 0) return;
+	
+	var closestTarget = this.targetList[0];
+	var bulletvec = new Victor(this.x, this.y);
+	var targetvec = new Victor(closestTarget.x, closestTarget.y);
+	var closestDistanceSq = bulletvec.distanceSq(targetvec);
+	
+	
+	for (var i = 1; i < this.targetList.length; i++) {
+		var t = this.targetList[i];
+		targetvec = new Victor(t.x, t.y);
+		var d = bulletvec.distanceSq(targetvec);
+		
+		if (d < closestDistanceSq) {
+			closestTarget = t;
+			closestDistanceSq = d;
+		}
+	}
+	
+	return closestTarget;
 }
 
 // ########################
@@ -437,6 +467,27 @@ WeaponSpreadShot.prototype.fire = function (projectiles, x, y) {
 }
 
 // ########################
+// WeaponHoming Class
+// ########################
+
+function WeaponHoming() {
+	Weapon.call(this);
+
+	this.speed = 2;
+
+	this.lastFire = 0;
+	this.fireDelay = 1000;
+}
+
+WeaponHoming.prototype = Object.create(Weapon.prototype);
+WeaponHoming.prototype.constructor = WeaponHoming;
+
+WeaponHoming.prototype.fire = function (projectiles, x, y) {
+	projectiles.push(new PlayerHomingBullet(x, y, this.speed, enemies));
+}
+
+
+// ########################
 // Player Class
 // ########################
 
@@ -463,6 +514,7 @@ function Player(x, y) {
 	this.weapons.push(new WeaponSingleShot());
 	this.weapons.push(new WeaponMultiShot());
 	this.weapons.push(new WeaponSpreadShot());
+	this.weapons.push(new WeaponHoming());
 
 	this.weapon = this.weapons[0];
 
@@ -471,7 +523,7 @@ function Player(x, y) {
 }
 
 Player.prototype.weaponSelect = function (i) {
-	this.weapon = this.weapons[i];
+	if (this.weapons[i]) this.weapon = this.weapons[i];
 }
 
 Player.prototype.update = function () {
@@ -786,7 +838,7 @@ EnemyCircle.prototype = Object.create(Enemy.prototype);
 EnemyCircle.prototype.constructor = EnemyCircle;
 
 EnemyCircle.prototype.fire = function (x, y, dx, dy) {
-	enemyProjectiles.push(new HomingBullet(x, y, dx, dy, player));
+	enemyProjectiles.push(new HomingBullet(x, y, dy, player));
 }
 // ########################
 // EnemyPath Class
@@ -948,6 +1000,10 @@ function keyDownHandler(e) {
 
 	if (e.keyCode == 51) {
 		player.weaponSelect(2);
+	}
+
+	if (e.keyCode == 52) {
+		player.weaponSelect(3);
 	}
 }
 function keyUpHandler(e) {
