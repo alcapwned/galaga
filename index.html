@@ -53,6 +53,82 @@ Projectile.prototype.draw = function (ctx) {
 }
 
 // ########################
+// Bullet Class
+// ########################
+
+function Bullet(x, y, dx, dy) {
+	Projectile.call(this, x, y, dx, dy);
+
+	this.color = "#0000FF";
+	this.damage = 2;
+}
+
+Bullet.prototype = Object.create(Projectile.prototype);
+Bullet.prototype.constructor = Bullet;
+
+// ########################
+// HomingBullet Class
+// ########################
+
+function HomingBullet(x, y, dx, dy, player) {
+	Bullet.call(this, x, y, dx, dy);
+  this.player = player;
+  
+  this.speed = dy;
+  this.dtheta = Math.PI / 400;
+  this.v = new Victor(0, dy);
+
+	this.color = "#0066FF";
+	this.damage = 2;
+}
+
+HomingBullet.prototype = Object.create(Bullet.prototype);
+HomingBullet.prototype.constructor = HomingBullet;
+
+HomingBullet.prototype.update = function () {
+  var pp = new Victor(this.player.x, this.player.y);
+  var pb = new Victor(this.x, this.y);
+  var d = pp.clone().subtract(pb);
+  //var btheta = this.v.angle();
+  //var ptheta = pp.angle();
+  var theta = d.angle() - this.v.angle();
+  
+  if (theta < -Math.PI) theta += 2 * Math.PI;
+  if (theta > Math.PI) theta -= 2 * Math.PI;
+  
+  if (Math.abs(theta) < this.dtheta) {
+    this.v.rotateTo(d.angle());
+  } else { 
+    this.v.rotate(theta < 0 ? -this.dtheta : this.dtheta);
+  }
+ 
+  //this.v.rotateTo((pp.clone().subtract(pb)).angle());
+  //console.log(pp.angle() + "/" + this.v.angle());
+  
+  this.x += this.v.x;
+  this.y += this.v.y;
+
+	if (this.x < -this.radius || this.x > canvas.width + this.radius ||
+		this.y < -this.radius || this.y > canvas.height + this.radius) {
+		this.offScreen = true;
+	}
+}
+
+// ########################
+// StraightBullet Class
+// ########################
+
+function StraightBullet(x, y, dx, dy) {
+	Bullet.call(this, x, y, dx, dy);
+
+	this.color = "#00FFFF";
+	this.damage = 2;
+}
+
+StraightBullet.prototype = Object.create(Bullet.prototype);
+StraightBullet.prototype.constructor = StraightBullet;
+
+// ########################
 // Powerup Class
 // ########################
 
@@ -540,12 +616,15 @@ EnemyAIPath.prototype.move = function () {
 		while (this.t >= 1) this.t--;
 		
 		if (this.p1i == this.path.length - 1) {
+      // If we're at the end of the path. change directions
 			this.p0i = this.path.length - 1;
 			this.p1i = this.path.length - 2;
 		} else if (this.p1i == 0) {
+      // If we're at the beginning of the path change directions
 			this.p0i = 0;
 			this.p1i = 1;
 		} else {
+      // Step forward depending on which direction we're moving
 			if (this.p0i < this.p1i) {
 				this.p0i++;
 				this.p1i++;
@@ -559,7 +638,8 @@ EnemyAIPath.prototype.move = function () {
 		p1 = this.path[this.p1i];
 	}
 	
-	var p = p0.clone().mix(p1, this.t)
+  // Interpolate between points
+	var p = p0.clone().mix(p1, this.t);
 	this.enemy.x = p.x;
 	this.enemy.y = p.y;
 	
@@ -617,7 +697,7 @@ Enemy.prototype.tryFire = function (x, y, dx, dy) {
 }
 
 Enemy.prototype.fire = function (x, y, dx, dy) {
-	enemyProjectiles.push(new Projectile(x, y, dx, dy));
+	enemyProjectiles.push(new StraightBullet(x, y, dx, dy));
 }
 
 // ########################
@@ -635,6 +715,9 @@ function EnemyCircle(x, y, dx, dy){
 EnemyCircle.prototype = Object.create(Enemy.prototype);
 EnemyCircle.prototype.constructor = EnemyCircle;
 
+EnemyCircle.prototype.fire = function (x, y, dx, dy) {
+	enemyProjectiles.push(new HomingBullet(x, y, dx, dy, player));
+}
 // ########################
 // EnemyPath Class
 // ########################
