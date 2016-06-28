@@ -15,7 +15,6 @@
 <script src="./victor.js"></script>
 
 <script>
-
 // ########################
 // Projectile Class
 // ########################
@@ -26,7 +25,7 @@ function Projectile(x, y, dx, dy) {
 	this.radius = 2;
 	this.dx = dx;
 	this.dy = dy;
-	
+
 	this.offScreen = false;
 	this.remove = false;
 
@@ -72,11 +71,11 @@ Bullet.prototype.constructor = Bullet;
 
 function HomingBullet(x, y, dx, dy, player) {
 	Bullet.call(this, x, y, dx, dy);
-  this.player = player;
-  
-  this.speed = dy;
-  this.dtheta = Math.PI / 400;
-  this.v = new Victor(0, dy);
+	this.player = player;
+
+	this.speed = dy;
+	this.dtheta = Math.PI / 400;
+	this.v = new Victor(0, dy);
 
 	this.color = "#0066FF";
 	this.damage = 2;
@@ -86,27 +85,28 @@ HomingBullet.prototype = Object.create(Bullet.prototype);
 HomingBullet.prototype.constructor = HomingBullet;
 
 HomingBullet.prototype.update = function () {
-  var pp = new Victor(this.player.x, this.player.y);
-  var pb = new Victor(this.x, this.y);
-  var d = pp.clone().subtract(pb);
-  //var btheta = this.v.angle();
-  //var ptheta = pp.angle();
-  var theta = d.angle() - this.v.angle();
-  
-  if (theta < -Math.PI) theta += 2 * Math.PI;
-  if (theta > Math.PI) theta -= 2 * Math.PI;
-  
-  if (Math.abs(theta) < this.dtheta) {
-    this.v.rotateTo(d.angle());
-  } else { 
-    this.v.rotate(theta < 0 ? -this.dtheta : this.dtheta);
-  }
- 
-  //this.v.rotateTo((pp.clone().subtract(pb)).angle());
-  //console.log(pp.angle() + "/" + this.v.angle());
-  
-  this.x += this.v.x;
-  this.y += this.v.y;
+	var pp = new Victor(this.player.x, this.player.y);
+	var pb = new Victor(this.x, this.y);
+
+	var d = pp.clone().subtract(pb);
+	var theta = d.angle() - this.v.angle();
+
+	if (theta < -Math.PI)
+		theta += 2 * Math.PI;
+	if (theta > Math.PI)
+		theta -= 2 * Math.PI;
+
+	if (Math.abs(theta) < this.dtheta) {
+		this.v.rotateTo(d.angle());
+	} else {
+		this.v.rotate(theta < 0 ? -this.dtheta : this.dtheta);
+	}
+
+	//this.v.rotateTo((pp.clone().subtract(pb)).angle());
+	//console.log(pp.angle() + "/" + this.v.angle());
+
+	this.x += this.v.x;
+	this.y += this.v.y;
 
 	if (this.x < -this.radius || this.x > canvas.width + this.radius ||
 		this.y < -this.radius || this.y > canvas.height + this.radius) {
@@ -182,7 +182,7 @@ Powerup.prototype.activate = function () {
 
 function FireRatePowerup() {
 	Powerup.call(this);
-	
+
 	this.color = "#FF8800";
 }
 
@@ -200,7 +200,7 @@ FireRatePowerup.prototype.activate = function (player) {
 
 function BulletSpeedPowerup() {
 	Powerup.call(this);
-	
+
 	this.color = "#CCFF00";
 }
 
@@ -218,7 +218,7 @@ BulletSpeedPowerup.prototype.activate = function (player) {
 
 function HPPowerup() {
 	Powerup.call(this);
-	
+
 	this.color = "#FF00FF";
 }
 
@@ -227,10 +227,10 @@ HPPowerup.prototype.constructor = HPPowerup;
 
 HPPowerup.prototype.activate = function (player) {
 	this.remove = true;
-	
-  player.hp += 10;
-  if (player.hp > player.maxhp)
-    player.hp = player.maxhp;
+
+	player.hp += 10;
+	if (player.hp > player.maxhp)
+		player.hp = player.maxhp;
 }
 
 // ########################
@@ -239,7 +239,7 @@ HPPowerup.prototype.activate = function (player) {
 
 function PlayerSpeedPowerup() {
 	Powerup.call(this);
-	
+
 	this.color = "#00FF00";
 }
 
@@ -248,8 +248,8 @@ PlayerSpeedPowerup.prototype.constructor = PlayerSpeedPowerup;
 
 PlayerSpeedPowerup.prototype.activate = function (player) {
 	this.remove = true;
-	
-  player.increaseSpeed(10);
+
+	player.increaseSpeed(10);
 }
 
 // ########################
@@ -258,7 +258,7 @@ PlayerSpeedPowerup.prototype.activate = function (player) {
 
 function PlayerAccelPowerup() {
 	Powerup.call(this);
-	
+
 	this.color = "#00FFFF";
 }
 
@@ -267,8 +267,8 @@ PlayerAccelPowerup.prototype.constructor = PlayerAccelPowerup;
 
 PlayerAccelPowerup.prototype.activate = function (player) {
 	this.remove = true;
-	
-  player.increaseAccel(10);
+
+	player.increaseAccel(10);
 }
 
 // ########################
@@ -283,7 +283,7 @@ function Weapon() {
 	this.fireDelay = 1000;
 }
 
-Weapon.prototype.fire = function (projectiles, x, y) { }
+Weapon.prototype.fire = function (projectiles, x, y) {}
 
 Weapon.prototype.increaseROF = function (pct) {
 	this.fireDelay /= (1 + pct / 100);
@@ -300,7 +300,7 @@ Weapon.prototype.increaseBulletSpeed = function (pct) {
 
 function WeaponSingleShot() {
 	Weapon.call(this);
-	
+
 	this.dx = 0;
 	this.dy = -2;
 
@@ -326,11 +326,11 @@ WeaponSingleShot.prototype.fire = function (projectiles, x, y) {
 
 function WeaponMultiShot() {
 	Weapon.call(this);
-	
+
 	this.dx = 0;
 	this.dy = -2;
 	this.spread = 20;
-	
+
 	this.lastFire = 0;
 	this.fireDelay = 1500;
 }
@@ -354,11 +354,11 @@ WeaponMultiShot.prototype.fire = function (projectiles, x, y) {
 
 function WeaponSpreadShot() {
 	Weapon.call(this);
-	
+
 	//this.dx = 0.8;
 	this.dy = -2;
-	this.angle = Math.PI/10;
-	
+	this.angle = Math.PI / 10;
+
 	this.lastFire = 0;
 	this.fireDelay = 1500;
 }
@@ -384,17 +384,17 @@ function Player(x, y) {
 	this.radius = 10;
 	this.x = x;
 	this.y = y;
-	this.dx = 0;		// Current speed
+	this.dx = 0; // Current speed
 	this.dy = 0;
-	this.ax = 0.08;		// Acceleration
+	this.ax = 0.08; // Acceleration
 	this.ay = 0.08;
-	this.maxax = 0.15;	// Max acceleration possible with powerups
+	this.maxax = 0.15; // Max acceleration possible with powerups
 	this.maxay = 0.15;
-	this.maxdx = 1.8;	// Current max speed
+	this.maxdx = 1.8; // Current max speed
 	this.maxdy = 1.8;
-	this.limitdx = 4;	// Highest max speed you can get via powerups
+	this.limitdx = 4; // Highest max speed you can get via powerups
 	this.limitdy = 4;
-  
+
 	this.maxhp = 100;
 	this.hp = this.maxhp;
 
@@ -417,10 +417,12 @@ Player.prototype.weaponSelect = function (i) {
 Player.prototype.update = function () {
 	if (rightPressed) {
 		this.dx += this.ax;
-		if (this.dx > this.maxdx) this.dx = this.maxdx;
+		if (this.dx > this.maxdx)
+			this.dx = this.maxdx;
 	} else if (leftPressed) {
 		this.dx -= this.ax;
-		if (this.dx < -this.maxdx) this.dx = -this.maxdx;
+		if (this.dx < -this.maxdx)
+			this.dx = -this.maxdx;
 	} else {
 		if (Math.abs(this.dx) < this.ax) {
 			this.dx = 0;
@@ -428,7 +430,7 @@ Player.prototype.update = function () {
 			this.dx -= Math.sign(this.dx) * this.ax;
 		}
 	}
-	
+
 	if (this.x > canvas.width - this.radius) {
 		this.dx = 0;
 		this.x = canvas.width - this.radius;
@@ -436,16 +438,17 @@ Player.prototype.update = function () {
 		this.dx = 0;
 		this.x = this.radius;
 	}
-	
+
 	this.x += this.dx;
-	
-	
+
 	if (downPressed) {
 		this.dy += this.ay;
-		if (this.dy > this.maxdy) this.dy = this.maxdy;
+		if (this.dy > this.maxdy)
+			this.dy = this.maxdy;
 	} else if (upPressed) {
 		this.dy -= this.ay;
-		if (this.dy < -this.maxdy) this.dy = -this.maxdy;
+		if (this.dy < -this.maxdy)
+			this.dy = -this.maxdy;
 	} else {
 		if (Math.abs(this.dy) < this.ay) {
 			this.dy = 0;
@@ -461,10 +464,9 @@ Player.prototype.update = function () {
 		this.dy = 0;
 		this.y = this.radius;
 	}
-	
+
 	this.y += this.dy;
-	
-	
+
 	if (this.hp <= 0) {
 		this.dead = true;
 	}
@@ -483,19 +485,23 @@ Player.prototype.fire = function (projectiles) {
 }
 
 Player.prototype.increaseSpeed = function (pct) {
-  this.maxdx *= (1 + pct/100);  
-  if (this.maxdx > this.limitdx) this.maxdx = this.limitdx;
-    
-  this.maxdy *= (1 + pct/100);  
-  if (this.maxdy > this.limitdy) this.maxdy = this.limitdy;  
+	this.maxdx *= (1 + pct / 100);
+	if (this.maxdx > this.limitdx)
+		this.maxdx = this.limitdx;
+
+	this.maxdy *= (1 + pct / 100);
+	if (this.maxdy > this.limitdy)
+		this.maxdy = this.limitdy;
 }
 
 Player.prototype.increaseAccel = function (pct) {
-  this.ax *= (1 + pct/100);  
-  if (this.ax > this.maxax) this.ax = this.maxax;
-    
-  this.ay *= (1 + pct/100);  
-  if (this.ay > this.maxay) this.ay = this.maxay;  
+	this.ax *= (1 + pct / 100);
+	if (this.ax > this.maxax)
+		this.ax = this.maxax;
+
+	this.ay *= (1 + pct / 100);
+	if (this.ay > this.maxay)
+		this.ay = this.maxay;
 }
 
 // ########################
@@ -514,12 +520,12 @@ function EnemyAI(enemy) {
 }
 
 EnemyAI.prototype.move = function () {
-  if (this.direction === "right") {
+	if (this.direction === "right") {
 		if (this.enemy.x < canvas.width - this.enemy.radius) {
 			this.enemy.x += this.dx;
 		} else {
 			this.direction = "left";
-		} 
+		}
 	}
 
 	if (this.direction === "left") {
@@ -529,13 +535,12 @@ EnemyAI.prototype.move = function () {
 			this.direction = "right";
 		}
 	}
-   
+
 	this.enemy.tryFire(
 		this.enemy.x,
 		this.enemy.y,
 		0,
-		this.bulletSpeedAvg + this.bulletSpeedSpread * (2 * Math.random() - 1)
-	);
+		this.bulletSpeedAvg + this.bulletSpeedSpread * (2 * Math.random() - 1));
 }
 
 // ########################
@@ -544,7 +549,7 @@ EnemyAI.prototype.move = function () {
 
 function EnemyAICircle(enemy, cx, cy) {
 	this.cx = cx;
-	this.cy = cy;  
+	this.cy = cy;
 	this.dcx = 0.5;
 	this.dcy = 0;
 
@@ -559,15 +564,15 @@ EnemyAICircle.prototype.move = function () {
 
 	this.cx += this.dcx;
 	this.cy += this.dcy;
-  
+
 	this.enemy.x = this.cx + this.radius * Math.cos(this.theta);
 	this.enemy.y = this.cy + this.radius * Math.sin(this.theta);
-  
+
 	if (this.enemy.x > canvas.width - this.enemy.radius || this.enemy.x < this.enemy.radius) {
 		this.dcx *= -1;
 		this.dtheta *= -1;
 	}
-	
+
 	if (this.enemy.y > canvas.height - this.enemy.radius || this.enemy.y < this.enemy.radius) {
 		this.dcy *= -1;
 		this.dtheta *= -1;
@@ -604,27 +609,28 @@ EnemyAIPath.prototype.move = function () {
 		this.enemy.y = path[0].y;
 		return;
 	}
-	
+
 	var p0 = this.path[this.p0i];
 	var p1 = this.path[this.p1i];
 	var d = p1.clone().subtract(p0).length();
 	var dt = this.speed / d;
-	
+
 	this.t += dt;
-	
+
 	if (this.t >= 1) {
-		while (this.t >= 1) this.t--;
-		
+		while (this.t >= 1)
+			this.t--;
+
 		if (this.p1i == this.path.length - 1) {
-      // If we're at the end of the path. change directions
+			// If we're at the end of the path. change directions
 			this.p0i = this.path.length - 1;
 			this.p1i = this.path.length - 2;
 		} else if (this.p1i == 0) {
-      // If we're at the beginning of the path change directions
+			// If we're at the beginning of the path change directions
 			this.p0i = 0;
 			this.p1i = 1;
 		} else {
-      // Step forward depending on which direction we're moving
+			// Step forward depending on which direction we're moving
 			if (this.p0i < this.p1i) {
 				this.p0i++;
 				this.p1i++;
@@ -633,19 +639,19 @@ EnemyAIPath.prototype.move = function () {
 				this.p1i--;
 			}
 		}
-		
+
 		p0 = this.path[this.p0i];
 		p1 = this.path[this.p1i];
 	}
-	
-  // Interpolate between points
+
+	// Interpolate between points
 	var p = p0.clone().mix(p1, this.t);
 	this.enemy.x = p.x;
 	this.enemy.y = p.y;
-	
+
 	this.enemy.tryFire(this.enemy.x, this.enemy.y, 0, 2);
 }
-	
+
 // ########################
 // Enemy Class
 // ########################
@@ -672,8 +678,8 @@ Enemy.prototype.update = function () {
 	if (this.hp <= 0) {
 		this.dead = true;
 	}
-  
-  this.ai.move();
+
+	this.ai.move();
 }
 
 Enemy.prototype.draw = function (ctx) {
@@ -704,12 +710,12 @@ Enemy.prototype.fire = function (x, y, dx, dy) {
 // EnemyCircle Class
 // ########################
 
-function EnemyCircle(x, y, dx, dy){
-  Enemy.call(this, x, y, dx, dy)
-  this.ai = new EnemyAICircle(this, x, y);
-  
-  this.score = 200;
-  this.color = "#FF9900";
+function EnemyCircle(x, y, dx, dy) {
+	Enemy.call(this, x, y, dx, dy)
+	this.ai = new EnemyAICircle(this, x, y);
+
+	this.score = 200;
+	this.color = "#FF9900";
 }
 
 EnemyCircle.prototype = Object.create(Enemy.prototype);
@@ -722,21 +728,20 @@ EnemyCircle.prototype.fire = function (x, y, dx, dy) {
 // EnemyPath Class
 // ########################
 
-function EnemyPath(x, y, dx, dy){
-  Enemy.call(this, x, y, dx, dy)
-  this.ai = new EnemyAIPath(this, 1)
-	.addPoint(new Victor(50, 50))
-	.addPoint(new Victor(200, 50))
-	.addPoint(new Victor(200, 200))
-	.addPoint(new Victor(400, 50));
-  
-  this.score = 200;
-  this.color = "#6600FF";
+function EnemyPath(x, y, dx, dy) {
+	Enemy.call(this, x, y, dx, dy)
+	this.ai = new EnemyAIPath(this, 1)
+		.addPoint(new Victor(50, 50))
+		.addPoint(new Victor(200, 50))
+		.addPoint(new Victor(200, 200))
+		.addPoint(new Victor(400, 50));
+
+	this.score = 200;
+	this.color = "#6600FF";
 }
 
 EnemyPath.prototype = Object.create(Enemy.prototype);
 EnemyPath.prototype.constructor = EnemyPath;
-
 
 // #########################
 // Main
@@ -787,8 +792,7 @@ function collisionDetection() {
 			if ((rect1.x - rect1.radius) < (rect2.x + rect2.radius) &&
 				(rect1.x + rect1.radius) > (rect2.x - rect2.radius) &&
 				(rect1.y - rect1.radius) < (rect2.y + rect2.radius) &&
-				(rect1.y + rect1.radius) > (rect2.y - rect2.radius))
-			{
+				(rect1.y + rect1.radius) > (rect2.y - rect2.radius)) {
 				var e = enemies[i];
 				var p = playerProjectiles[j];
 				p.remove = true;
@@ -802,8 +806,7 @@ function collisionDetection() {
 		if ((rect1.x - rect1.radius) < (rect2.x + rect2.radius) &&
 			(rect1.x + rect1.radius) > (rect2.x - rect2.radius) &&
 			(rect1.y - rect1.radius) < (rect2.y + rect2.radius) &&
-			(rect1.y + rect1.radius) > (rect2.y - rect2.radius)) 
-    {
+			(rect1.y + rect1.radius) > (rect2.y - rect2.radius)) {
 			if (lastCollide + collideDelay < (new Date()).getTime()) {
 				player.hp -= 10;
 				player.update();
@@ -818,8 +821,7 @@ function collisionDetection() {
 		if ((rect1.x - rect1.radius) < (rect2.x + rect2.radius) &&
 			(rect1.x + rect1.radius) > (rect2.x - rect2.radius) &&
 			(rect1.y - rect1.radius) < (rect2.y + rect2.radius) &&
-			(rect1.y + rect1.radius) > (rect2.y - rect2.radius))
-		{
+			(rect1.y + rect1.radius) > (rect2.y - rect2.radius)) {
 			var proj = enemyProjectiles[j];
 			proj.remove = true;
 			player.hp -= proj.damage;
@@ -832,8 +834,7 @@ function collisionDetection() {
 		if ((rect1.x - rect1.radius) < (rect2.x + rect2.radius) &&
 			(rect1.x + rect1.radius) > (rect2.x - rect2.radius) &&
 			(rect1.y - rect1.radius) < (rect2.y + rect2.radius) &&
-			(rect1.y + rect1.radius) > (rect2.y - rect2.radius))
-		{
+			(rect1.y + rect1.radius) > (rect2.y - rect2.radius)) {
 			var pow = powerups[j];
 			pow.activate(player);
 
@@ -844,9 +845,9 @@ function collisionDetection() {
 			} else if (pow instanceof HPPowerup) {
 				console.log("HP powerup aquired");
 			} else if (pow instanceof PlayerSpeedPowerup) {
-				console.log("Player speed powerup aquired");      
+				console.log("Player speed powerup aquired");
 			} else if (pow instanceof PlayerAccelPowerup) {
-				console.log("Player acceleration powerup aquired");      
+				console.log("Player acceleration powerup aquired");
 			}
 		}
 	}
@@ -948,10 +949,10 @@ function draw() {
 
 			if (e.dead) {
 				enemies.splice(i, 1);
-        score += e.score;
+				score += e.score;
 				continue;
 			}
-      
+
 			e.update();
 			e.draw(ctx);
 		}
@@ -971,7 +972,7 @@ function draw() {
 		if (lastpowerup + powerupdelay < (new Date()).getTime()) {
 			var randompowerup = Math.floor((Math.random() * 5) + 1);
 			var p;
-      
+
 			if (randompowerup == 1) {
 				p = new BulletSpeedPowerup();
 			} else if (randompowerup == 2) {
@@ -983,7 +984,7 @@ function draw() {
 			} else if (randompowerup == 5) {
 				p = new PlayerAccelPowerup();
 			}
-      
+
 			powerups.push(p);
 			lastpowerup = (new Date()).getTime();
 		}
@@ -996,7 +997,7 @@ function draw() {
 		if (spacePressed) {
 			player.fire(playerProjectiles);
 		}
-    
+
 		ctx.font = "16px sans serif";
 		ctx.fillStyle = "white";
 		ctx.textAlign = "left";
