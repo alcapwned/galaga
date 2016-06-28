@@ -285,6 +285,13 @@ function Weapon() {
 
 Weapon.prototype.fire = function (projectiles, x, y) {}
 
+Weapon.prototype.tryFire = function (projectiles, x, y) {
+	if (this.lastFire + this.fireDelay < (new Date()).getTime()) {
+		this.fire(projectiles, x, y);
+		this.lastFire = (new Date()).getTime();
+	}
+}
+
 Weapon.prototype.increaseROF = function (pct) {
 	this.fireDelay /= (1 + pct / 100);
 }
@@ -312,12 +319,7 @@ WeaponSingleShot.prototype = Object.create(Weapon.prototype);
 WeaponSingleShot.prototype.constructor = WeaponSingleShot;
 
 WeaponSingleShot.prototype.fire = function (projectiles, x, y) {
-	if (this.lastFire + this.fireDelay < (new Date()).getTime()) {
-		var p = new Projectile(x, y, this.dx, this.dy);
-
-		projectiles.push(p);
-		this.lastFire = (new Date()).getTime();
-	}
+	projectiles.push(new Bullet(x, y, this.dx, this.dy));
 }
 
 // ########################
@@ -339,13 +341,9 @@ WeaponMultiShot.prototype = Object.create(Weapon.prototype);
 WeaponMultiShot.prototype.constructor = WeaponMultiShot;
 
 WeaponMultiShot.prototype.fire = function (projectiles, x, y) {
-	if (this.lastFire + this.fireDelay < (new Date()).getTime()) {
-		projectiles.push(new Projectile(x - this.spread, y, this.dx, this.dy));
-		projectiles.push(new Projectile(x, y, this.dx, this.dy));
-		projectiles.push(new Projectile(x + this.spread, y, this.dx, this.dy));
-
-		this.lastFire = (new Date()).getTime();
-	}
+	projectiles.push(new Bullet(x - this.spread, y, this.dx, this.dy));
+	projectiles.push(new Bullet(x, y, this.dx, this.dy));
+	projectiles.push(new Bullet(x + this.spread, y, this.dx, this.dy));
 }
 
 // ########################
@@ -367,13 +365,9 @@ WeaponSpreadShot.prototype = Object.create(Weapon.prototype);
 WeaponSpreadShot.prototype.constructor = WeaponSpreadShot;
 
 WeaponSpreadShot.prototype.fire = function (projectiles, x, y) {
-	if (this.lastFire + this.fireDelay < (new Date()).getTime()) {
-		projectiles.push(new Projectile(x, y, -this.dy * Math.tan(this.angle), this.dy));
-		projectiles.push(new Projectile(x, y, 0, this.dy));
-		projectiles.push(new Projectile(x, y, this.dy * Math.tan(this.angle), this.dy));
-
-		this.lastFire = (new Date()).getTime();
-	}
+	projectiles.push(new Bullet(x, y, -this.dy * Math.tan(this.angle), this.dy));
+	projectiles.push(new Bullet(x, y, 0, this.dy));
+	projectiles.push(new Bullet(x, y, this.dy * Math.tan(this.angle), this.dy));
 }
 
 // ########################
@@ -481,7 +475,11 @@ Player.prototype.draw = function (ctx) {
 }
 
 Player.prototype.fire = function (projectiles) {
-	this.weapon.fire(projectiles, this.x, this.y);
+	this.weapon.fire(projectiles, this.x, this.y - this.radius);
+}
+
+Player.prototype.tryFire = function (projectiles) {
+	this.weapon.tryFire(projectiles, this.x, this.y - this.radius);
 }
 
 Player.prototype.increaseSpeed = function (pct) {
@@ -995,7 +993,7 @@ function draw() {
 			"p: " + powerups.length);
 
 		if (spacePressed) {
-			player.fire(playerProjectiles);
+			player.tryFire(playerProjectiles);
 		}
 
 		ctx.font = "16px sans serif";
