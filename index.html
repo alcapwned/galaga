@@ -69,9 +69,9 @@ Bullet.prototype.constructor = Bullet;
 // HomingBullet Class
 // ########################
 
-function HomingBullet(x, y, dx, dy, player) {
+function HomingBullet(x, y, dx, dy, target) {
 	Bullet.call(this, x, y, dx, dy);
-	this.player = player;
+	this.target = target;
 
 	this.speed = dy;
 	this.dtheta = Math.PI / 400;
@@ -85,7 +85,7 @@ HomingBullet.prototype = Object.create(Bullet.prototype);
 HomingBullet.prototype.constructor = HomingBullet;
 
 HomingBullet.prototype.update = function () {
-	var pp = new Victor(this.player.x, this.player.y);
+	var pp = new Victor(this.target.x, this.target.y);
 	var pb = new Victor(this.x, this.y);
 
 	var d = pp.clone().subtract(pb);
@@ -102,16 +102,41 @@ HomingBullet.prototype.update = function () {
 		this.v.rotate(theta < 0 ? -this.dtheta : this.dtheta);
 	}
 
-	//this.v.rotateTo((pp.clone().subtract(pb)).angle());
-	//console.log(pp.angle() + "/" + this.v.angle());
-
 	this.x += this.v.x;
 	this.y += this.v.y;
 
 	if (this.x < -this.radius || this.x > canvas.width + this.radius ||
-		this.y < -this.radius || this.y > canvas.height + this.radius) {
+		this.y < -this.radius || this.y > canvas.height + this.radius)
+	{
 		this.offScreen = true;
 	}
+}
+
+// ########################
+// PlayerHomingBullet Class
+// ########################
+
+function PlayerHomingBullet(x, y, dx, dy, targetList) {
+	HomingBullet.call(this, x, y, dx, dy);
+	this.targetList = targetList;
+	this.target = this.findClosestTarget();
+
+	this.color = "#FF66FF";
+	this.damage = 10;
+}
+
+PlayerHomingBullet.prototype = Object.create(HomingBullet.prototype);
+PlayerHomingBullet.prototype.constructor = PlayerHomingBullet;
+
+PlayerHomingBullet.prototype.update = function () {
+	this.target = this.findClosestTarget();
+	HomingBullet.prototype.update.call(this);
+}
+
+PlayerHomingBullet.prototype.findClosestTarget = function () {
+	var b = new Victor(this.x, this.y);
+	var t = this.targetList[0];
+	return t;
 }
 
 // ########################
@@ -129,16 +154,31 @@ StraightBullet.prototype = Object.create(Bullet.prototype);
 StraightBullet.prototype.constructor = StraightBullet;
 
 // ########################
+// PlayerStraightBullet Class
+// ########################
+
+function PlayerStraightBullet(x, y, dx, dy) {
+	StraightBullet.call(this, x, y, dx, dy);
+
+	this.color = "#FF66FF";
+	this.damage = 10;
+}
+
+PlayerStraightBullet.prototype = Object.create(StraightBullet.prototype);
+PlayerStraightBullet.prototype.constructor = PlayerStraightBullet;
+
+// ########################
 // Powerup Class
 // ########################
 
-function Powerup() {
-	this.x = Math.random() * canvas.width;
-	this.y = Math.random() * canvas.height;
+function Powerup(x, y, dx, dy) {
+	this.x = x || Math.random() * canvas.width;
+	this.y = y || Math.random() * canvas.height;
 	this.radius = 4;
-	this.dx = Math.random() * 2 - 1;
-	this.dy = Math.random() * 2 - 1;
+	this.dx = dx || Math.random() * 2 - 1;
+	this.dy = dy || Math.random() * 2 - 1;
 	this.color = "yellow";
+	this.text = "P";
 
 	this.offScreen = false;
 	this.remove = false;
@@ -151,11 +191,23 @@ Powerup.prototype.update = function () {
 	this.x += this.dx;
 	this.y += this.dy;
 
-	if (this.x < this.radius || this.x > canvas.width - this.radius) {
+	if (this.x < this.radius) {
+		this.x = this.radius;
 		this.dx *= -1;
 	}
-
-	if (this.y < this.radius || this.y > canvas.height - this.radius) {
+	
+	if (this.x > canvas.width - this.radius) {
+		this.x = canvas.width - this.radius;
+		this.dx *= -1;
+	}
+	
+	if (this.y < this.radius) {
+		this.y = this.radius;
+		this.dy *= -1;
+	}
+	
+	if (this.y > canvas.height - this.radius) {
+		this.y = canvas.height - this.radius;
 		this.dy *= -1;
 	}
 
@@ -165,11 +217,20 @@ Powerup.prototype.update = function () {
 }
 
 Powerup.prototype.draw = function (ctx) {
-	ctx.beginPath();
+	/*ctx.beginPath();
 	ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
 	ctx.fillStyle = this.color;
 	ctx.fill();
-	ctx.closePath();
+	ctx.closePath();*/
+	
+	ctx.font = "16px sans serif";
+	ctx.textAlign = "center";
+	ctx.textBaseline = "middle";
+	ctx.fillStyle = "black";
+	ctx.strokeStyle = this.color;
+	ctx.lineWidth = 2;
+	ctx.strokeText(this.text, this.x, this.y);
+	ctx.fillText(this.text, this.x, this.y);
 }
 
 Powerup.prototype.activate = function () {
@@ -184,6 +245,7 @@ function FireRatePowerup() {
 	Powerup.call(this);
 
 	this.color = "#FF8800";
+	this.text = "R";
 }
 
 FireRatePowerup.prototype = Object.create(Powerup.prototype);
@@ -202,6 +264,7 @@ function BulletSpeedPowerup() {
 	Powerup.call(this);
 
 	this.color = "#CCFF00";
+	this.text = "B";
 }
 
 BulletSpeedPowerup.prototype = Object.create(Powerup.prototype);
@@ -220,6 +283,7 @@ function HPPowerup() {
 	Powerup.call(this);
 
 	this.color = "#FF00FF";
+	this.text = "H";
 }
 
 HPPowerup.prototype = Object.create(Powerup.prototype);
@@ -241,6 +305,7 @@ function PlayerSpeedPowerup() {
 	Powerup.call(this);
 
 	this.color = "#00FF00";
+	this.text = "S";
 }
 
 PlayerSpeedPowerup.prototype = Object.create(Powerup.prototype);
@@ -260,6 +325,7 @@ function PlayerAccelPowerup() {
 	Powerup.call(this);
 
 	this.color = "#00FFFF";
+	this.text = "A";
 }
 
 PlayerAccelPowerup.prototype = Object.create(Powerup.prototype);
@@ -319,7 +385,7 @@ WeaponSingleShot.prototype = Object.create(Weapon.prototype);
 WeaponSingleShot.prototype.constructor = WeaponSingleShot;
 
 WeaponSingleShot.prototype.fire = function (projectiles, x, y) {
-	projectiles.push(new Bullet(x, y, this.dx, this.dy));
+	projectiles.push(new PlayerStraightBullet(x, y, this.dx, this.dy));
 }
 
 // ########################
@@ -341,9 +407,9 @@ WeaponMultiShot.prototype = Object.create(Weapon.prototype);
 WeaponMultiShot.prototype.constructor = WeaponMultiShot;
 
 WeaponMultiShot.prototype.fire = function (projectiles, x, y) {
-	projectiles.push(new Bullet(x - this.spread, y, this.dx, this.dy));
-	projectiles.push(new Bullet(x, y, this.dx, this.dy));
-	projectiles.push(new Bullet(x + this.spread, y, this.dx, this.dy));
+	projectiles.push(new PlayerStraightBullet(x - this.spread, y, this.dx, this.dy));
+	projectiles.push(new PlayerStraightBullet(x, y, this.dx, this.dy));
+	projectiles.push(new PlayerStraightBullet(x + this.spread, y, this.dx, this.dy));
 }
 
 // ########################
@@ -365,9 +431,9 @@ WeaponSpreadShot.prototype = Object.create(Weapon.prototype);
 WeaponSpreadShot.prototype.constructor = WeaponSpreadShot;
 
 WeaponSpreadShot.prototype.fire = function (projectiles, x, y) {
-	projectiles.push(new Bullet(x, y, -this.dy * Math.tan(this.angle), this.dy));
-	projectiles.push(new Bullet(x, y, 0, this.dy));
-	projectiles.push(new Bullet(x, y, this.dy * Math.tan(this.angle), this.dy));
+	projectiles.push(new PlayerStraightBullet(x, y, -this.dy * Math.tan(this.angle), this.dy));
+	projectiles.push(new PlayerStraightBullet(x, y, 0, this.dy));
+	projectiles.push(new PlayerStraightBullet(x, y, this.dy * Math.tan(this.angle), this.dy));
 }
 
 // ########################
