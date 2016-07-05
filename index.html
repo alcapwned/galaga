@@ -940,6 +940,7 @@ var powerups = [];
 
 var gameState = "game";
 var score = 0;
+var lastDraw = (new Date()).getTime();
 
 enemies.push(new Enemy(10, 50, 2, 0));
 enemies.push(new Enemy(50, 80, 1.5, 0));
@@ -1087,6 +1088,7 @@ function draw() {
 
 	ctx.fillStyle = "black";
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
+	
 
 	if (gameState === "game") {
 		collisionDetection();
@@ -1177,6 +1179,7 @@ function draw() {
 		ctx.textAlign = "left";
 		ctx.fillText("HP = " + player.hp + "/" + player.maxhp, 0, 16);
 		ctx.fillText("Score = " + score, 0, 32);
+		ctx.fillText("Draw dT = " + ((new Date()).getTime() - lastDraw), 0, 48);
 
 		if (player.hp <= 0) {
 			gameState = "gameOver";
@@ -1187,6 +1190,8 @@ function draw() {
 		ctx.textAlign = "center";
 		ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
 	}
+	
+	lastDraw = (new Date()).getTime();
 }
 
 setInterval(draw, 10);
