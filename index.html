@@ -198,6 +198,33 @@ PlayerStraightBullet.prototype = Object.create(StraightBullet.prototype);
 PlayerStraightBullet.prototype.constructor = PlayerStraightBullet;
 
 // ########################
+// PlayerWaveBullet Class
+// ########################
+
+function PlayerWaveBullet(x, y, amplitude, dy, dtheta) {
+	Bullet.call(this, x, y);
+	
+	this.p0 = new Victor(x, y);
+	this.amplitude = amplitude;
+	this.dy = dy;
+	this.theta = 0;
+	this.dtheta = dtheta;
+
+	this.color = "#FF66FF";
+	this.damage = 10;
+}
+
+PlayerWaveBullet.prototype = Object.create(Bullet.prototype);
+PlayerWaveBullet.prototype.constructor = PlayerWaveBullet;
+
+PlayerWaveBullet.prototype.update = function () {
+	this.theta += this.dtheta;
+	
+	this.x = this.p0.x + this.amplitude * Math.sin(this.theta);
+	this.y += this.dy;
+}
+
+// ########################
 // Powerup Class
 // ########################
 
@@ -486,6 +513,28 @@ WeaponHoming.prototype.fire = function (projectiles, x, y) {
 	projectiles.push(new PlayerHomingBullet(x, y, this.speed, enemies));
 }
 
+// ########################
+// WeaponWave Class
+// ########################
+
+function WeaponWave() {
+	Weapon.call(this);
+
+	this.amplitude = 30;
+	this.dy = -2;
+	this.dtheta = Math.PI / 50;
+
+	this.lastFire = 0;
+	this.fireDelay = 1500;
+}
+
+WeaponWave.prototype = Object.create(Weapon.prototype);
+WeaponWave.prototype.constructor = WeaponWave;
+
+WeaponWave.prototype.fire = function (projectiles, x, y) {
+	projectiles.push(new PlayerWaveBullet(x, y, this.amplitude, this.dy, this.dtheta));
+	projectiles.push(new PlayerWaveBullet(x, y, -this.amplitude, this.dy, this.dtheta));
+}
 
 // ########################
 // Player Class
@@ -515,6 +564,7 @@ function Player(x, y) {
 	this.weapons.push(new WeaponMultiShot());
 	this.weapons.push(new WeaponSpreadShot());
 	this.weapons.push(new WeaponHoming());
+	this.weapons.push(new WeaponWave());
 
 	this.weapon = this.weapons[0];
 
@@ -1004,6 +1054,10 @@ function keyDownHandler(e) {
 
 	if (e.keyCode == 52) {
 		player.weaponSelect(3);
+	}
+
+	if (e.keyCode == 53) {
+		player.weaponSelect(4);
 	}
 }
 function keyUpHandler(e) {
