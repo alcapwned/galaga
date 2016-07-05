@@ -1096,11 +1096,12 @@ function draw() {
 		player.update();
 		player.draw(ctx);
 
-		for (var i in playerProjectiles) {
+		for (var i = 0; i < playerProjectiles.length; i++) {
 			var p = playerProjectiles[i];
 
 			if (p.offScreen || p.remove) {
 				playerProjectiles.splice(i, 1);
+				i--;
 				continue;
 			}
 
@@ -1108,11 +1109,12 @@ function draw() {
 			p.draw(ctx);
 		}
 
-		for (var i in enemyProjectiles) {
+		for (var i = 0; i < enemyProjectiles.length; i++) {
 			var p = enemyProjectiles[i];
 
 			if (p.offScreen || p.remove) {
 				enemyProjectiles.splice(i, 1);
+				i--;
 				continue;
 			}
 
@@ -1120,11 +1122,12 @@ function draw() {
 			p.draw(ctx);
 		}
 
-		for (var i in enemies) {
+		for (var i = 0; i < enemies.length; i++) {
 			var e = enemies[i];
 
 			if (e.dead) {
 				enemies.splice(i, 1);
+				i--;
 				score += e.score;
 				continue;
 			}
@@ -1133,11 +1136,12 @@ function draw() {
 			e.draw(ctx);
 		}
 
-		for (var i in powerups) {
+		for (var i = 0; i < powerups.length; i++) {
 			var p = powerups[i];
 
 			if (p.offScreen || p.remove) {
 				powerups.splice(i, 1);
+				i--;
 				continue;
 			}
 
